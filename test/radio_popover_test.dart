@@ -33,10 +33,8 @@ void main() {
       );
     await icons.load();
   });
-  testWidgets('220x172 panel aligns every state in light and dark appearance', (
-    tester,
-  ) async {
-    tester.view.physicalSize = const Size(440, 344);
+  testWidgets('220x148 panel fits a long playing channel name', (tester) async {
+    tester.view.physicalSize = const Size(440, 296);
     tester.view.devicePixelRatio = 2;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -52,9 +50,11 @@ void main() {
           brightness;
       for (final status in RadioStatus.values) {
         when(() => controller.status).thenReturn(status);
-        when(
-          () => controller.channel,
-        ).thenReturn(RadioChannel.byId('kbs_hanminjok'));
+        final channelId = status == RadioStatus.playing
+            ? 'arirang_radio'
+            : 'kbs_hanminjok';
+        final selectedChannel = RadioChannel.byId(channelId);
+        when(() => controller.channel).thenReturn(selectedChannel);
         final capture = GlobalKey();
         await tester.pumpWidget(
           RepaintBoundary(
@@ -73,12 +73,26 @@ void main() {
         );
         await tester.pump();
         expect(tester.takeException(), isNull, reason: '$brightness-$status');
-        expect(find.text('KBS 한민족방송'), findsOneWidget);
+        expect(
+          find.text(
+            status == RadioStatus.playing
+                ? 'Arirang Radio'
+                : 'KBS 한민족방송',
+          ),
+          findsOneWidget,
+        );
+        expect(
+          tester.widget<Text>(find.text(selectedChannel.station)).maxLines,
+          1,
+        );
         expect(find.byType(Slider), findsNothing);
         final artwork = tester.getRect(
-          find.ancestor(of: find.text('KBS'), matching: find.byType(Container)),
+          find.ancestor(
+            of: find.text(selectedChannel.station),
+            matching: find.byType(Container),
+          ),
         );
-        final channel = tester.getRect(find.text('KBS 한민족방송'));
+        final channelTitle = tester.getRect(find.text(selectedChannel.name));
         final actions = tester.getRect(find.byIcon(CupertinoIcons.ellipsis));
         final playback = tester.getRect(
           status == RadioStatus.connecting
@@ -89,7 +103,7 @@ void main() {
                       : CupertinoIcons.play_fill,
                 ),
         );
-        expect(channel.left, artwork.left);
+        expect(channelTitle.left, artwork.left);
         expect(playback.center.dx, (artwork.right + actions.right) / 2);
         expect(playback.center.dy, artwork.center.dy);
         expect(artwork.left, greaterThan(12));

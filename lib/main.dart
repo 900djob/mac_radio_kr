@@ -273,13 +273,17 @@ class _ChannelArtwork extends StatelessWidget {
               color: CupertinoColors.white,
             ),
             const SizedBox(height: 4),
-            Text(
-              channel.station,
-              style: const TextStyle(
-                color: CupertinoColors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 1.5,
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                channel.station,
+                maxLines: 1,
+                style: const TextStyle(
+                  color: CupertinoColors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.5,
+                ),
               ),
             ),
             const SizedBox(height: 2),
