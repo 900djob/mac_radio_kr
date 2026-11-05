@@ -21,6 +21,7 @@ void main() {
       );
       addTearDown(controller.shutdown);
       await controller.initialize();
+      await player.setVolume(0);
 
       for (final channel in RadioChannel.channels) {
         await controller.select(channel);

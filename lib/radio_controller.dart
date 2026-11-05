@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'menu_bar_bridge.dart';
 import 'radio_channel.dart';
 import 'stream_url_resolver.dart';
 
@@ -22,11 +23,12 @@ class RadioController extends ChangeNotifier {
     required SharedPreferences preferences,
     AudioPlayer? player,
     StreamUrlResolver? resolver,
+    MenuBarBridge? volumeBridge,
   }) : _preferences = preferences,
        _player = player ?? AudioPlayer(),
-       _resolver = resolver ?? StreamUrlResolver() {
+       _resolver = resolver ?? StreamUrlResolver(),
+       _volumeBridge = volumeBridge ?? MenuBarBridge() {
     channel = RadioChannel.byId(preferences.getString('channel'));
-    volume = (preferences.getDouble('volume') ?? 0.5).clamp(0.0, 1.0);
     _stateSubscription = _player.playerStateStream.listen(_onPlayerState);
     _errorSubscription = _player.errorStream.listen((_) => _fail());
   }
@@ -34,18 +36,38 @@ class RadioController extends ChangeNotifier {
   final SharedPreferences _preferences;
   final AudioPlayer _player;
   final StreamUrlResolver _resolver;
+  final MenuBarBridge _volumeBridge;
+  StreamSubscription<SystemVolumeState>? _volumeSubscription;
   late final StreamSubscription<PlayerState> _stateSubscription;
   late final StreamSubscription<PlayerException> _errorSubscription;
 
   late RadioChannel channel;
-  late double volume;
+  double volume = 0;
+  bool canControlVolume = false;
   RadioStatus status = RadioStatus.stopped;
   int _request = 0;
   bool _wantsPlayback = false;
   bool _closed = false;
   Future<void>? _shutdown;
+  int _volumeRevision = 0;
 
-  Future<void> initialize() => _player.setVolume(volume);
+  Future<void> initialize() async {
+    // 앱 게인을 고정해 시스템 볼륨이 이중으로 감쇠되지 않도록 한다.
+    await _player.setVolume(1);
+    await _preferences.remove('volume');
+    if (_closed) return;
+    _volumeSubscription = _volumeBridge.systemVolumeChanges.listen(
+      _applySystemVolume,
+      onError: (Object _) => _disableVolumeControl(),
+    );
+    final revision = _volumeRevision;
+    try {
+      final state = await _volumeBridge.getSystemVolume();
+      if (revision == _volumeRevision) _applySystemVolume(state);
+    } catch (_) {
+      if (revision == _volumeRevision) _disableVolumeControl();
+    }
+  }
 
   Future<void> select(RadioChannel selected) async {
     if (_closed) return;
@@ -87,19 +109,38 @@ class RadioController extends ChangeNotifier {
     await _player.stop();
   }
 
-  Future<void> step(int offset) {
-    final index = RadioChannel.channels.indexOf(channel);
-    return select(
-      RadioChannel.channels[(index + offset) % RadioChannel.channels.length],
-    );
-  }
-
   Future<void> setVolume(double value) async {
-    if (_closed) return;
+    if (_closed || !canControlVolume) return;
+    final revision = ++_volumeRevision;
     volume = value.clamp(0.0, 1.0);
     notifyListeners();
-    await _player.setVolume(volume);
-    await _preferences.setDouble('volume', volume);
+    try {
+      final state = await _volumeBridge.setSystemVolume(volume);
+      if (revision == _volumeRevision) _applySystemVolume(state);
+    } catch (_) {
+      if (_closed || revision != _volumeRevision) return;
+      try {
+        final state = await _volumeBridge.getSystemVolume();
+        if (revision == _volumeRevision) _applySystemVolume(state);
+      } catch (_) {
+        _disableVolumeControl();
+      }
+    }
+  }
+
+  void _applySystemVolume(SystemVolumeState state) {
+    if (_closed) return;
+    ++_volumeRevision;
+    volume = state.muted ? 0 : state.volume;
+    canControlVolume = state.available;
+    notifyListeners();
+  }
+
+  void _disableVolumeControl() {
+    if (_closed) return;
+    ++_volumeRevision;
+    canControlVolume = false;
+    notifyListeners();
   }
 
   bool _isCurrent(int request) => !_closed && request == _request;
@@ -135,6 +176,7 @@ class RadioController extends ChangeNotifier {
   }
 
   Future<void> _close() async {
+    await _volumeSubscription?.cancel();
     await _stateSubscription.cancel();
     await _errorSubscription.cancel();
     await _player.dispose();

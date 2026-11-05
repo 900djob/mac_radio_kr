@@ -195,47 +195,26 @@ class RadioPopover extends StatelessWidget {
                       ],
                     ),
                     const Spacer(),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        _PanelButton(
-                          label: '이전 채널',
-                          onPressed: () => controller.step(-1),
-                          child: Icon(
-                            CupertinoIcons.backward_end_fill,
-                            size: 24,
-                            color: secondary,
+                    Center(
+                      child: _PanelButton(
+                        label: busy || active ? '재생 정지' : '라디오 재생',
+                        onPressed: controller.togglePlayback,
+                        child: SizedBox(
+                          width: 40,
+                          height: 36,
+                          child: Center(
+                            child: busy
+                                ? const CupertinoActivityIndicator(radius: 10)
+                                : Icon(
+                                    active
+                                        ? CupertinoIcons.stop_fill
+                                        : CupertinoIcons.play_fill,
+                                    size: active ? 24 : 30,
+                                    color: text,
+                                  ),
                           ),
                         ),
-                        _PanelButton(
-                          label: busy || active ? '재생 정지' : '라디오 재생',
-                          onPressed: controller.togglePlayback,
-                          child: SizedBox(
-                            width: 40,
-                            height: 36,
-                            child: Center(
-                              child: busy
-                                  ? const CupertinoActivityIndicator(radius: 10)
-                                  : Icon(
-                                      active
-                                          ? CupertinoIcons.stop_fill
-                                          : CupertinoIcons.play_fill,
-                                      size: active ? 24 : 30,
-                                      color: text,
-                                    ),
-                            ),
-                          ),
-                        ),
-                        _PanelButton(
-                          label: '다음 채널',
-                          onPressed: () => controller.step(1),
-                          child: Icon(
-                            CupertinoIcons.forward_end_fill,
-                            size: 24,
-                            color: secondary,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                     const Spacer(),
                     Row(
@@ -247,7 +226,9 @@ class RadioPopover extends StatelessWidget {
                         ),
                         Expanded(
                           child: Semantics(
-                            label: '볼륨',
+                            label: controller.canControlVolume
+                                ? '시스템 볼륨'
+                                : '출력 장치에서 볼륨을 조절하세요',
                             value: '${(controller.volume * 100).round()}%',
                             child: SizedBox(
                               height: 28,
@@ -276,7 +257,9 @@ class RadioPopover extends StatelessWidget {
                                   ),
                                   child: Slider(
                                     value: controller.volume,
-                                    onChanged: controller.setVolume,
+                                    onChanged: controller.canControlVolume
+                                        ? controller.setVolume
+                                        : null,
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 10,
                                     ),

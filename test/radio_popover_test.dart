@@ -46,6 +46,7 @@ void main() {
     final controller = DisplayController();
     final bridge = DisplayBridge();
     when(() => controller.volume).thenReturn(0.5);
+    when(() => controller.canControlVolume).thenReturn(true);
     when(() => bridge.updateStatus(any())).thenAnswer((_) async {});
 
     for (final brightness in Brightness.values) {
@@ -76,6 +77,8 @@ void main() {
         expect(tester.takeException(), isNull, reason: '$brightness-$status');
         expect(find.text('KBS 한민족방송'), findsOneWidget);
         expect(find.byType(Slider), findsOneWidget);
+        expect(find.byIcon(CupertinoIcons.backward_end_fill), findsNothing);
+        expect(find.byIcon(CupertinoIcons.forward_end_fill), findsNothing);
 
         const directory = String.fromEnvironment('UI_CAPTURE_DIRECTORY');
         if (directory.isNotEmpty && status == RadioStatus.stopped) {

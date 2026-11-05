@@ -2,10 +2,12 @@ import Cocoa
 import FlutterMacOS
 
 @main
-class AppDelegate: FlutterAppDelegate {
+class AppDelegate: FlutterAppDelegate, FlutterStreamHandler {
   private var radioEngine: FlutterEngine?
   private var radioViewController: FlutterViewController?
   private var menuChannel: FlutterMethodChannel?
+  private var volumeChannel: FlutterEventChannel?
+  private let systemVolume = SystemOutputVolume()
   private var statusItem: NSStatusItem?
   private let popover = NSPopover()
   private var escapeMonitor: Any?
@@ -24,6 +26,10 @@ class AppDelegate: FlutterAppDelegate {
     channel.setMethodCallHandler { [weak self] call, result in
       self?.handle(call, result: result)
     }
+    let volumeEvents = FlutterEventChannel(name: "mac_radio_kr/system_volume",
+                                           binaryMessenger: engine.binaryMessenger)
+    volumeChannel = volumeEvents
+    volumeEvents.setStreamHandler(self)
     engine.run(withEntrypoint: nil)
 
     let controller = FlutterViewController(engine: engine, nibName: nil, bundle: nil)
@@ -70,6 +76,20 @@ class AppDelegate: FlutterAppDelegate {
 
   private func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
     switch call.method {
+    case "getSystemVolume":
+      result(systemVolume.state.dictionary)
+
+    case "setSystemVolume":
+      guard let volume = call.arguments as? Double, volume.isFinite else {
+        result(FlutterError(code: "invalid_volume", message: "Invalid system volume", details: nil))
+        return
+      }
+      do {
+        result(try systemVolume.setVolume(volume).dictionary)
+      } catch {
+        result(FlutterError(code: "volume_unavailable", message: "System volume is unavailable", details: nil))
+      }
+
     case "showChannelMenu":
       guard let args = call.arguments as? [String: Any],
             let channels = args["channels"] as? [[String: String]],
@@ -130,6 +150,16 @@ class AppDelegate: FlutterAppDelegate {
     menuSelection = sender.representedObject as? String
   }
 
+  func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
+    systemVolume.startObserving { events($0.dictionary) }
+    return nil
+  }
+
+  func onCancel(withArguments arguments: Any?) -> FlutterError? {
+    systemVolume.stopObserving()
+    return nil
+  }
+
   override func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
     return false
   }
@@ -141,6 +171,8 @@ class AppDelegate: FlutterAppDelegate {
   override func applicationWillTerminate(_ notification: Notification) {
     if let monitor = escapeMonitor { NSEvent.removeMonitor(monitor) }
     menuChannel?.setMethodCallHandler(nil)
+    volumeChannel?.setStreamHandler(nil)
+    systemVolume.stopObserving()
     radioEngine?.shutDownEngine()
   }
 }
