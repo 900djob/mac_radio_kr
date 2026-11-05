@@ -52,8 +52,8 @@ class RadioController extends ChangeNotifier {
   int _volumeRevision = 0;
 
   Future<void> initialize() async {
-    // 앱 게인을 고정해 시스템 볼륨이 이중으로 감쇠되지 않도록 한다.
-    await _player.setVolume(1);
+    // 시스템 볼륨 연동은 유지하고 라디오 출력만 낮춰 작은 음량을 확보한다.
+    await _player.setVolume(0.3);
     await _preferences.remove('volume');
     if (_closed) return;
     _volumeSubscription = _volumeBridge.systemVolumeChanges.listen(

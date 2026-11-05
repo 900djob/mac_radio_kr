@@ -10,7 +10,7 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets(
-    'all 13 stations play through the native macOS player',
+    'regional and provider sample stations play through the native macOS player',
     (tester) async {
       // 자동 검증은 무음으로 수행하며 실제 사용자 설정을 변경하지 않는다.
       SharedPreferences.setMockInitialValues({'volume': 0.0});
@@ -23,7 +23,36 @@ void main() {
       await controller.initialize();
       await player.setVolume(0);
 
-      for (final channel in RadioChannel.channels) {
+      const sampleIds = [
+        'kbs_1',
+        'mbc_fm4u',
+        'sbs_gorilla',
+        'cbs_standard',
+        'ebs_fm',
+        'ebs_bandi',
+        'afn_humphreys',
+        'community_mapo_local',
+        'tbs_fm',
+        'wbs_seoul',
+        'kbs_busan_1',
+        'mbc_busan_sfm',
+        'sbs_ubc_green',
+        'cbs_gyeongnam_sfm',
+        'afn_daegu',
+        'mbc_andong_sfm',
+        'sbs_kbc_myfm',
+        'mbc_mokpo_sfm',
+        'wbs_jeonbuk',
+        'tbn_daejeon',
+        'community_sejong',
+        'befm_busan',
+        'mbc_cheongju_sfm',
+        'kbs_chuncheon_1',
+        'febc_jeju',
+      ];
+      final playbackFailures = <String>[];
+      for (final id in sampleIds) {
+        final channel = RadioChannel.byId(id);
         await controller.select(channel);
         final deadline = DateTime.now().add(const Duration(seconds: 20));
         while (DateTime.now().isBefore(deadline) &&
@@ -32,21 +61,23 @@ void main() {
                 player.bufferedPosition <= Duration.zero)) {
           await Future<void>.delayed(const Duration(milliseconds: 250));
         }
-        expect(controller.status, RadioStatus.playing, reason: channel.name);
-        expect(
-          player.bufferedPosition.inMilliseconds,
-          greaterThan(0),
-          reason: channel.name,
-        );
-        debugPrint(
-          'AUDIO_CHECK ${channel.id}: playing, buffered=${player.bufferedPosition.inMilliseconds}ms',
-        );
+        final bufferedMilliseconds = player.bufferedPosition.inMilliseconds;
+        if (controller.status != RadioStatus.playing ||
+            bufferedMilliseconds <= 0) {
+          playbackFailures.add(channel.id);
+          debugPrint('AUDIO_CHECK_FAIL ${channel.id}: ${controller.status}');
+        } else {
+          debugPrint(
+            'AUDIO_CHECK ${channel.id}: playing, buffered=${bufferedMilliseconds}ms',
+          );
+        }
       }
 
       await controller.stop();
       expect(controller.status, RadioStatus.stopped);
       expect(player.playing, isFalse);
+      expect(playbackFailures, isEmpty, reason: playbackFailures.join(', '));
     },
-    timeout: const Timeout(Duration(minutes: 8)),
+    timeout: const Timeout(Duration(minutes: 12)),
   );
 }

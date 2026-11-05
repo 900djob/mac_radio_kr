@@ -24,6 +24,23 @@ void main() {
     );
   });
 
+  test('KBS regional code is resolved through the official API', () async {
+    final resolver = StreamUrlResolver(
+      client: MockClient((request) async {
+        expect(request.url.path, endsWith('/10_21'));
+        return http.Response(
+          '{"channel_item":[{"service_url":"https://example.com/busan.m3u8"}]}',
+          200,
+        );
+      }),
+    );
+    addTearDown(resolver.close);
+    expect(
+      await resolver.resolve(RadioChannel.byId('kbs_busan_1')),
+      Uri.parse('https://example.com/busan.m3u8'),
+    );
+  });
+
   test('text URLs are trimmed and refreshed for every play', () async {
     var calls = 0;
     final resolver = StreamUrlResolver(
@@ -60,6 +77,90 @@ void main() {
     expect(
       (await resolver.resolve(channel)).toString(),
       StreamUrlResolver.ebsFallback,
+    );
+  });
+
+  test('MBC date-coded regional stream uses Korea local date', () async {
+    final resolver = StreamUrlResolver();
+    addTearDown(resolver.close);
+    final localDate = DateTime.now().toUtc().add(const Duration(hours: 9));
+    final digits =
+        '${localDate.year.toString().substring(2)}'
+        '${localDate.month.toString().padLeft(2, '0')}'
+        '${localDate.day.toString().padLeft(2, '0')}';
+    const dateCode = {
+      '0': 'q',
+      '1': 'h',
+      '2': 's',
+      '3': 'a',
+      '4': 'g',
+      '5': 'b',
+      '6': 'j',
+      '7': 'c',
+      '8': 'p',
+      '9': 'd',
+    };
+    final expected = digits.split('').map((digit) => dateCode[digit]!).join();
+    expect(
+      (await resolver.resolve(RadioChannel.byId('mbc_busan_sfm'))).path,
+      endsWith('$expected/playlist.m3u8'),
+    );
+  });
+
+  test('MBC Bora and AFN extract their dynamic stream addresses', () async {
+    final resolver = StreamUrlResolver(
+      client: MockClient((request) async {
+        if (request.url.path.endsWith('boraplay.ashx')) {
+          return http.Response(
+            '__boraplay({"BoraURL":"https://example.com/bora.m3u8"});',
+            200,
+          );
+        }
+        return http.Response(
+          '<servers><ip>14613.live.streamtheworld.com</ip></servers>',
+          200,
+        );
+      }),
+    );
+    addTearDown(resolver.close);
+    const boraChannel = RadioChannel(
+      id: 'mbc_bora_test',
+      name: 'MBC 보이는 라디오',
+      station: 'MBC',
+      region: RadioRegion.national,
+      source: StreamSource.mbcBora,
+      endpoint:
+          'https://sminiplay.imbc.com/boraplay.ashx?agent=webapp&callback=__boraplay',
+    );
+    expect(
+      await resolver.resolve(boraChannel),
+      Uri.parse('https://example.com/bora.m3u8'),
+    );
+    expect(
+      await resolver.resolve(RadioChannel.byId('afn_humphreys')),
+      Uri.parse('https://14613.live.streamtheworld.com/AFNP_OSNAAC.aac'),
+    );
+  });
+
+  test('HTTP streams are accepted only with a valid network host', () async {
+    final resolver = StreamUrlResolver();
+    addTearDown(resolver.close);
+    expect(
+      await resolver.resolve(RadioChannel.byId('community_gwanak')),
+      Uri.parse('http://icecast.radios.kr:8000/gwanakfm'),
+    );
+    await expectLater(
+      resolver.resolve(
+        const RadioChannel(
+          id: 'bad',
+          name: 'bad',
+          station: 'bad',
+          region: RadioRegion.national,
+          source: StreamSource.direct,
+          endpoint: 'file:///tmp/bad.m3u8',
+        ),
+      ),
+      throwsFormatException,
     );
   });
 

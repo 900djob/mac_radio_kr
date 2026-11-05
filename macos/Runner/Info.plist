@@ -24,6 +24,29 @@
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>$(PRODUCT_COPYRIGHT)</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSExceptionDomains</key>
+		<dict>
+			<key>115.68.194.186</key><dict><key>NSExceptionAllowsInsecureHTTPLoads</key><true/></dict>
+			<key>123.140.197.22</key><dict><key>NSExceptionAllowsInsecureHTTPLoads</key><true/></dict>
+			<key>123.254.72.24</key><dict><key>NSExceptionAllowsInsecureHTTPLoads</key><true/></dict>
+			<key>203.251.91.122</key><dict><key>NSExceptionAllowsInsecureHTTPLoads</key><true/></dict>
+			<key>61.82.49.4</key><dict><key>NSExceptionAllowsInsecureHTTPLoads</key><true/></dict>
+			<key>61.85.197.53</key><dict><key>NSExceptionAllowsInsecureHTTPLoads</key><true/></dict>
+			<key>icecast.radios.kr</key><dict><key>NSExceptionAllowsInsecureHTTPLoads</key><true/></dict>
+			<key>kdbmobile.clouducs.com</key><dict><key>NSExceptionAllowsInsecureHTTPLoads</key><true/></dict>
+			<key>live.dgcpbc.co.kr</key><dict><key>NSExceptionAllowsInsecureHTTPLoads</key><true/></dict>
+			<key>live.wjmbc.co.kr</key><dict><key>NSExceptionAllowsInsecureHTTPLoads</key><true/></dict>
+			<key>media.ggn.or.kr</key><dict><key>NSExceptionAllowsInsecureHTTPLoads</key><true/></dict>
+			<key>mlive2.febc.net</key><dict><key>NSExceptionAllowsInsecureHTTPLoads</key><true/></dict>
+			<key>onair.mapofm.net</key><dict><key>NSExceptionAllowsInsecureHTTPLoads</key><true/></dict>
+			<key>onair1.cpbc.co.kr</key><dict><key>NSExceptionAllowsInsecureHTTPLoads</key><true/></dict>
+			<key>pbcradio.dynamicsmart.com</key><dict><key>NSExceptionAllowsInsecureHTTPLoads</key><true/></dict>
+			<key>radiostream.communityradio.kr</key><dict><key>NSExceptionAllowsInsecureHTTPLoads</key><true/></dict>
+			<key>stream.yubinet.com</key><dict><key>NSExceptionAllowsInsecureHTTPLoads</key><true/></dict>
+		</dict>
+	</dict>
 	<key>NSMainNibFile</key>
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>

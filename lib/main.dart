@@ -2,17 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart'
-    show
-        Tooltip,
-        Material,
-        MaterialType,
-        Slider,
-        SliderTheme,
-        SliderThemeData,
-        RoundSliderThumbShape,
-        RoundSliderOverlayShape,
-        ShowValueIndicator,
-        DefaultMaterialLocalizations;
+    show Tooltip, DefaultMaterialLocalizations;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'menu_bar_bridge.dart';
@@ -118,165 +108,106 @@ class RadioPopover extends StatelessWidget {
       return ColoredBox(
         color: const Color(0x00000000),
         child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
+          padding: const EdgeInsets.all(16),
+          child: Column(
             children: [
-              _ChannelArtwork(channel: controller.channel, dark: dark),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _PanelButton(
-                            label: '채널 선택',
-                            onPressed: _chooseChannel,
-                            padding: const EdgeInsets.symmetric(vertical: 2),
-                            child: Row(
-                              children: [
-                                Flexible(
-                                  child: Text(
-                                    controller.channel.name,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      color: text,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      letterSpacing: -0.5,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 5),
-                                Icon(
-                                  CupertinoIcons.chevron_down,
-                                  size: 10,
-                                  color: secondary,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        _PanelButton(
-                          label: '더보기',
-                          onPressed: _showActions,
-                          padding: const EdgeInsets.all(4),
-                          child: Icon(
-                            CupertinoIcons.ellipsis,
-                            size: 16,
-                            color: secondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 3),
-                    Row(
-                      children: [
-                        if (active) ...[
-                          const _LiveBadge(),
-                          const SizedBox(width: 6),
-                        ],
-                        Expanded(
-                          child: Text(
-                            controller.status == RadioStatus.failed
-                                ? '연결 실패 · 재생을 눌러 다시 시도'
-                                : controller.status.label,
-                            maxLines: 1,
-                            style: TextStyle(
-                              color: controller.status == RadioStatus.failed
-                                  ? CupertinoColors.systemRed
-                                  : secondary,
-                              fontSize: 11,
-                              letterSpacing: -0.2,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const Spacer(),
-                    Center(
-                      child: _PanelButton(
-                        label: busy || active ? '재생 정지' : '라디오 재생',
-                        onPressed: controller.togglePlayback,
-                        child: SizedBox(
-                          width: 40,
-                          height: 36,
-                          child: Center(
-                            child: busy
-                                ? const CupertinoActivityIndicator(radius: 10)
-                                : Icon(
-                                    active
-                                        ? CupertinoIcons.stop_fill
-                                        : CupertinoIcons.play_fill,
-                                    size: active ? 24 : 30,
-                                    color: text,
-                                  ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const Spacer(),
-                    Row(
-                      children: [
-                        Icon(
-                          CupertinoIcons.speaker_fill,
-                          size: 13,
-                          color: secondary,
-                        ),
-                        Expanded(
-                          child: Semantics(
-                            label: controller.canControlVolume
-                                ? '시스템 볼륨'
-                                : '출력 장치에서 볼륨을 조절하세요',
-                            value: '${(controller.volume * 100).round()}%',
-                            child: SizedBox(
-                              height: 28,
-                              child: Material(
-                                type: MaterialType.transparency,
-                                child: SliderTheme(
-                                  data: SliderThemeData(
-                                    trackHeight: 3,
-                                    activeTrackColor: const Color(0xFF007AFF),
-                                    inactiveTrackColor: secondary.withValues(
-                                      alpha: 0.22,
-                                    ),
-                                    thumbColor: dark
-                                        ? const Color(0xFFE2E2E6)
-                                        : CupertinoColors.white,
-                                    overlayColor: const Color(0x19007AFF),
-                                    thumbShape: const RoundSliderThumbShape(
-                                      enabledThumbRadius: 5,
-                                      elevation: 1,
-                                    ),
-                                    overlayShape: const RoundSliderOverlayShape(
-                                      overlayRadius: 9,
-                                    ),
-                                    showValueIndicator:
-                                        ShowValueIndicator.never,
-                                  ),
-                                  child: Slider(
-                                    value: controller.volume,
-                                    onChanged: controller.canControlVolume
-                                        ? controller.setVolume
-                                        : null,
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                    ),
-                                    semanticFormatterCallback: (value) =>
-                                        '${(value * 100).round()}%',
-                                  ),
-                                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: _PanelButton(
+                      label: '${controller.channel.name} · 채널 선택',
+                      onPressed: _chooseChannel,
+                      padding: const EdgeInsets.symmetric(vertical: 2),
+                      child: Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              controller.channel.name,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: text,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: -0.5,
                               ),
                             ),
                           ),
-                        ),
-                        Icon(
-                          CupertinoIcons.speaker_3_fill,
-                          size: 16,
-                          color: secondary,
+                          const SizedBox(width: 4),
+                          Icon(
+                            CupertinoIcons.chevron_down,
+                            size: 9,
+                            color: secondary,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Tooltip(
+                    message: controller.status == RadioStatus.failed
+                        ? '연결 실패 · 재생을 눌러 다시 시도'
+                        : controller.status.label,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (active) ...[
+                          const _LiveBadge(),
+                          const SizedBox(width: 5),
+                        ],
+                        Text(
+                          controller.status.label,
+                          style: TextStyle(
+                            color: controller.status == RadioStatus.failed
+                                ? CupertinoColors.systemRed
+                                : secondary,
+                            fontSize: 10,
+                            letterSpacing: -0.2,
+                          ),
                         ),
                       ],
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  _PanelButton(
+                    label: '더보기',
+                    onPressed: _showActions,
+                    padding: const EdgeInsets.only(left: 8, top: 4, bottom: 4),
+                    child: Icon(
+                      CupertinoIcons.ellipsis,
+                      size: 16,
+                      color: secondary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Expanded(
+                child: Row(
+                  children: [
+                    _ChannelArtwork(channel: controller.channel, dark: dark),
+                    Expanded(
+                      child: Center(
+                        child: _PanelButton(
+                          label: busy || active ? '재생 정지' : '라디오 재생',
+                          onPressed: controller.togglePlayback,
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: SizedBox(
+                            width: 56,
+                            height: 56,
+                            child: Center(
+                              child: busy
+                                  ? const CupertinoActivityIndicator(radius: 12)
+                                  : Icon(
+                                      active
+                                          ? CupertinoIcons.stop_fill
+                                          : CupertinoIcons.play_fill,
+                                      size: active ? 26 : 32,
+                                      color: text,
+                                    ),
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -308,10 +239,10 @@ class _ChannelArtwork extends StatelessWidget {
       label: '${channel.station} 라디오',
       image: true,
       child: Container(
-        width: 92,
-        height: 112,
+        width: 72,
+        height: 72,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(8),
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -338,15 +269,15 @@ class _ChannelArtwork extends StatelessWidget {
           children: [
             const Icon(
               CupertinoIcons.antenna_radiowaves_left_right,
-              size: 28,
+              size: 22,
               color: CupertinoColors.white,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
             Text(
               channel.station,
               style: const TextStyle(
                 color: CupertinoColors.white,
-                fontSize: 20,
+                fontSize: 18,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 1.5,
               ),
@@ -356,8 +287,8 @@ class _ChannelArtwork extends StatelessWidget {
               'RADIO',
               style: TextStyle(
                 color: CupertinoColors.white.withValues(alpha: 0.75),
-                fontSize: 8,
-                letterSpacing: 3,
+                fontSize: 7,
+                letterSpacing: 2,
               ),
             ),
           ],

@@ -33,10 +33,10 @@ void main() {
       );
     await icons.load();
   });
-  testWidgets('340x156 panel fits every state in light and dark appearance', (
+  testWidgets('220x172 panel aligns every state in light and dark appearance', (
     tester,
   ) async {
-    tester.view.physicalSize = const Size(680, 312);
+    tester.view.physicalSize = const Size(440, 344);
     tester.view.devicePixelRatio = 2;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -45,8 +45,6 @@ void main() {
     );
     final controller = DisplayController();
     final bridge = DisplayBridge();
-    when(() => controller.volume).thenReturn(0.5);
-    when(() => controller.canControlVolume).thenReturn(true);
     when(() => bridge.updateStatus(any())).thenAnswer((_) async {});
 
     for (final brightness in Brightness.values) {
@@ -76,7 +74,25 @@ void main() {
         await tester.pump();
         expect(tester.takeException(), isNull, reason: '$brightness-$status');
         expect(find.text('KBS 한민족방송'), findsOneWidget);
-        expect(find.byType(Slider), findsOneWidget);
+        expect(find.byType(Slider), findsNothing);
+        final artwork = tester.getRect(
+          find.ancestor(of: find.text('KBS'), matching: find.byType(Container)),
+        );
+        final channel = tester.getRect(find.text('KBS 한민족방송'));
+        final actions = tester.getRect(find.byIcon(CupertinoIcons.ellipsis));
+        final playback = tester.getRect(
+          status == RadioStatus.connecting
+              ? find.byType(CupertinoActivityIndicator)
+              : find.byIcon(
+                  status == RadioStatus.playing
+                      ? CupertinoIcons.stop_fill
+                      : CupertinoIcons.play_fill,
+                ),
+        );
+        expect(channel.left, artwork.left);
+        expect(playback.center.dx, (artwork.right + actions.right) / 2);
+        expect(playback.center.dy, artwork.center.dy);
+        expect(artwork.left, greaterThan(12));
         expect(find.byIcon(CupertinoIcons.backward_end_fill), findsNothing);
         expect(find.byIcon(CupertinoIcons.forward_end_fill), findsNothing);
 

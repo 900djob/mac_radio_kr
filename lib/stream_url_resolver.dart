@@ -30,6 +30,45 @@ class StreamUrlResolver {
         return _streamUri(await _get(channel.endpoint));
       case StreamSource.direct:
         return _streamUri(channel.endpoint);
+      case StreamSource.mbcDateCode:
+        final nowInKorea = DateTime.now().toUtc().add(const Duration(hours: 9));
+        final digits =
+            '${nowInKorea.year.toString().substring(2)}'
+            '${nowInKorea.month.toString().padLeft(2, '0')}'
+            '${nowInKorea.day.toString().padLeft(2, '0')}';
+        const dateCode = {
+          '0': 'q',
+          '1': 'h',
+          '2': 's',
+          '3': 'a',
+          '4': 'g',
+          '5': 'b',
+          '6': 'j',
+          '7': 'c',
+          '8': 'p',
+          '9': 'd',
+        };
+        final code = digits.split('').map((digit) => dateCode[digit]!).join();
+        return _streamUri('${channel.endpoint}$code/playlist.m3u8');
+      case StreamSource.mbcBora:
+        final body = await _get(channel.endpoint);
+        final match = RegExp(r'''"BoraURL"\s*:\s*"([^"]+)"''').firstMatch(body);
+        if (match == null) {
+          throw const FormatException('MBC Bora stream is missing');
+        }
+        return _streamUri(match.group(1)!.replaceAll('&amp;', '&'));
+      case StreamSource.afn:
+        final response = await _get(
+          'https://playerservices.streamtheworld.com/api/livestream?station=${channel.endpoint}&transports=http%2Chls&version=1.10',
+        );
+        final addresses = RegExp(
+          r'<ip>(.*?)</ip>',
+        ).allMatches(response).map((match) => match.group(1)!).toList();
+        if (addresses.isEmpty) {
+          throw const FormatException('AFN stream server is missing');
+        }
+        final server = addresses.last;
+        return _streamUri('https://$server/${channel.endpoint}AAC.aac');
       case StreamSource.ebs:
         // EBS 온에어 페이지에서 당일 재생 주소를 가져온다.
         try {
@@ -60,8 +99,11 @@ class StreamUrlResolver {
 
   Uri _streamUri(String value) {
     final uri = Uri.tryParse(value.trim());
-    if (uri == null || uri.scheme != 'https' || uri.host.isEmpty) {
-      throw const FormatException('Invalid HTTPS stream URL');
+    if (uri == null ||
+        !const {'http', 'https'}.contains(uri.scheme) ||
+        uri.host.isEmpty ||
+        uri.userInfo.isNotEmpty) {
+      throw const FormatException('Invalid HTTP stream URL');
     }
     return uri;
   }

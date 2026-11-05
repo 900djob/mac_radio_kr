@@ -84,7 +84,7 @@ void main() {
       expect(controller.status, RadioStatus.stopped);
       verifyNever(() => player.play());
       expect(controller.volume, 0.5);
-      verify(() => player.setVolume(1)).called(1);
+      verify(() => player.setVolume(0.3)).called(1);
       verifyNever(() => volumeBridge.setSystemVolume(any()));
       await controller.select(RadioChannel.byId('sbs_power'));
       expect(preferences.getString('channel'), 'sbs_power');
@@ -146,7 +146,7 @@ void main() {
   });
 
   test(
-    'system changes and mute update the slider without writing back',
+    'system changes and mute update volume state without writing back',
     () async {
       await controller.initialize();
       volumeChanges.add(
@@ -163,13 +163,14 @@ void main() {
   );
 
   test(
-    'slider changes system volume and does not attenuate the player',
+    'volume changes update system volume while keeping the lower radio gain',
     () async {
       await controller.initialize();
-      await controller.setVolume(0.3);
-      expect(controller.volume, 0.3);
-      verify(() => volumeBridge.setSystemVolume(0.3)).called(1);
-      verifyNever(() => player.setVolume(0.3));
+      await controller.setVolume(0.4);
+      expect(controller.volume, 0.4);
+      verify(() => volumeBridge.setSystemVolume(0.4)).called(1);
+      verify(() => player.setVolume(0.3)).called(1);
+      verifyNever(() => player.setVolume(0.4));
       expect(preferences.getDouble('volume'), isNull);
     },
   );

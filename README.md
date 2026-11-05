@@ -4,7 +4,7 @@
 
 ## 실행
 
-macOS 13 이상, Flutter 3.41 이상, Xcode, CocoaPods가 필요합니다.
+macOS 14 이상, Flutter 3.41 이상, Xcode, CocoaPods가 필요합니다.
 
 ```sh
 flutter pub get
@@ -13,30 +13,35 @@ flutter run -d macos
 
 앱을 실행하면 메뉴바의 라디오 아이콘만 나타납니다. 아이콘을 클릭해 패널을 열고 채널명으로 채널을 선택합니다. 가운데 버튼은 재생·정지를 전환합니다. 패널을 닫아도 재생은 계속됩니다. 더보기 메뉴에서 앱을 종료합니다.
 
-첫 실행은 MBC FM4U, 정지 상태이며 자동 재생하지 않습니다. 마지막 채널만 저장합니다. 볼륨 슬라이더는 현재 macOS 출력 볼륨과 연동되며 키보드·제어 센터 변경과 음소거도 반영합니다. 앱 시작 시 시스템 볼륨을 변경하지 않습니다. 편성표, 선곡 정보와 지역 채널은 포함하지 않습니다.
+첫 실행은 MBC FM4U, 정지 상태이며 자동 재생하지 않습니다. 마지막 채널만 저장합니다. 채널 메뉴는 전국·지역별로 방송사를 나눠 표시합니다. 볼륨 슬라이더는 현재 macOS 출력 볼륨과 연동되며 키보드·제어 센터 변경과 음소거도 반영합니다. 앱 시작 시 시스템 볼륨을 변경하지 않습니다. 편성표와 선곡 정보는 포함하지 않습니다.
+
+라디오를 재생한 뒤에는 키보드 재생/일시정지 키와 macOS Now Playing에서 재생을 제어할 수 있습니다. 시스템의 일시정지·정지는 라디오 스트림을 정지하고, 다시 재생하면 최신 생방송에 연결합니다. 앱 최초 실행만으로 다른 재생 앱의 미디어 키를 차지하지 않습니다.
 
 ## 구성
 
-- Flutter: `RadioController`, `StreamUrlResolver`, 채널 목록, 340 × 156pt 패널 UI.
+- Flutter: `RadioController`, `StreamUrlResolver`, 채널 목록, 220 × 172pt 패널 UI.
 - AppKit: `NSStatusItem`, `NSPopover`, `NSVisualEffectView`, 네이티브 채널 메뉴와 엔진 수명 관리.
 - 오디오: 하나의 `just_audio` 플레이어로 HLS 재생. 채널 변경·재시도 시 동적 URL을 새로 조회합니다.
-- 채널: KBS 6개, MBC 2개, SBS 2개, CBS 2개, EBS FM으로 총 13개입니다.
-- 볼륨: CoreAudio로 기본 출력 장치의 볼륨·음소거·장치 변경을 감시합니다. 슬라이더는 시스템 볼륨을 조절하고 앱 자체 게인은 100%로 유지합니다. 시스템 볼륨 제어를 지원하지 않는 출력 장치에서는 슬라이더가 비활성화됩니다.
+- 채널: radio.bsod.kr의 방송사별 목록을 바탕으로 전국·지역 채널 및 공동체 라디오를 제공합니다. 현재 등록된 채널 수는 `RadioChannel.channels.length`입니다.
+- 볼륨: CoreAudio로 기본 출력 장치의 볼륨·음소거·장치 변경을 감시합니다. 슬라이더는 시스템 볼륨을 조절하고 라디오 출력 게인은 30%로 낮춰 작은 음량을 확보합니다. 시스템 볼륨 제어를 지원하지 않는 출력 장치에서는 슬라이더가 비활성화됩니다.
 - 저장: `shared_preferences`에 채널 ID만 저장합니다. 이전 앱 자체 볼륨 설정은 더 이상 사용하지 않습니다.
 
-방송사별 주소와 조회 방식은 [BSofDeath/radio.bsod.kr](https://github.com/BSofDeath/radio.bsod.kr/tree/main/functions/stream/url)를 참고했습니다. 이 앱은 운영자의 중계 서버를 사용하지 않고 방송사 API와 HLS에 직접 연결합니다. EBS는 온에어 HTML의 재생 주소를 추출하고, 없으면 기존 공식 HLS 주소를 시도합니다. 방송사 API나 페이지 변경 시 조회 코드 갱신이 필요할 수 있습니다.
+방송사별 주소와 조회 방식은 [BSofDeath/radio.bsod.kr](https://github.com/BSofDeath/radio.bsod.kr/tree/main/functions/stream/url)를 참고했습니다. 이 앱은 운영자의 중계 서버를 사용하지 않고 방송사 API와 HLS에 직접 연결합니다. 일부 HTTP 라디오 주소만 해당 호스트의 ATS 예외로 허용합니다. HTTP 스트림은 전송 중 암호화되지 않습니다. EBS는 온에어 HTML의 재생 주소를 추출하고, 없으면 기존 공식 HLS 주소를 시도합니다. 방송사 API나 페이지 변경 시 조회 코드 갱신이 필요할 수 있습니다.
+
+참고 목록의 채널 중 현재 HTTP 404, 주소 조회 실패, DNS 실패 또는 연결 제한 시간이 확인된 MBC 보이는 라디오, 일부 지역 BBS·공동체 라디오, 원주MBC 표준FM, BeFM, CJB 조이FM과 KBS 지역 미지원 조합은 카탈로그에서 제외했습니다. 재생 주소가 복구되면 다시 추가할 수 있습니다.
 
 ## 검증 및 빌드
 
 ```sh
 flutter analyze
 flutter test
+flutter test integration_test/radio_catalog_streams_test.dart -d macos
 flutter test integration_test/radio_playback_test.dart -d macos
 flutter test integration_test/system_volume_test.dart -d macos
 flutter build macos --release
 ```
 
-일반 테스트는 외부 네트워크 없이 응답 파싱, 제한 시간, 채널 전환 경쟁, 정지와 재시도를 검증합니다. 통합 테스트는 실제 네트워크·macOS 오디오 엔진을 사용해 13개 채널의 재생 상태와 오디오 버퍼 수신을 무음으로 확인합니다. 음량 0으로 수행하므로 실제 스피커 청취 확인과는 구분됩니다.
+일반 테스트는 외부 네트워크 없이 채널 ID와 지역 그룹, URL 파싱, 제한 시간, 채널 전환 경쟁, 정지와 재시도를 검증합니다. 카탈로그 통합 테스트는 등록된 전체 주소의 응답과 데이터 수신을 확인하고, 재생 통합 테스트는 각 스트림 방식과 지역 대표 채널을 실제 macOS 오디오 엔진에서 무음으로 확인합니다. 음량 0으로 수행하므로 실제 스피커 청취 확인과는 구분됩니다.
 
 시스템 볼륨 통합 테스트는 출력 볼륨을 잠깐 낮추고 0으로 변경해 CoreAudio 알림을 확인한 뒤 원래 볼륨으로 복원합니다. 볼륨 제어가 불가능하거나 이미 음소거 상태인 장치에서는 건너뜁니다.
 

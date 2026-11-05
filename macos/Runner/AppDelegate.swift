@@ -37,7 +37,7 @@ class AppDelegate: FlutterAppDelegate, FlutterStreamHandler {
     radioViewController = controller
     let content = RadioPopoverController(flutter: controller)
     popover.contentViewController = content
-    popover.contentSize = NSSize(width: 340, height: 156)
+    popover.contentSize = NSSize(width: 220, height: 172)
     popover.behavior = .transient
     popover.animates = true
 
@@ -97,21 +97,11 @@ class AppDelegate: FlutterAppDelegate, FlutterStreamHandler {
         result(FlutterError(code: "invalid_arguments", message: "Invalid channel menu", details: nil))
         return
       }
-      let menu = NSMenu()
-      var lastStation: String?
-      for channel in channels {
-        guard let id = channel["id"], let name = channel["name"],
-              let station = channel["station"] else { continue }
-        if lastStation != nil && lastStation != station {
-          menu.addItem(.separator())
-        }
-        lastStation = station
-        let item = NSMenuItem(title: name, action: #selector(selectMenuItem(_:)), keyEquivalent: "")
-        item.target = self
-        item.representedObject = id
-        item.state = id == selected ? .on : .off
-        menu.addItem(item)
-      }
+      let menu = Self.buildChannelMenu(
+        channels: channels,
+        selectedId: selected,
+        target: self,
+        action: #selector(selectMenuItem(_:)))
       result(show(menu))
 
     case "showActionsMenu":
@@ -148,6 +138,41 @@ class AppDelegate: FlutterAppDelegate, FlutterStreamHandler {
 
   @objc private func selectMenuItem(_ sender: NSMenuItem) {
     menuSelection = sender.representedObject as? String
+  }
+
+  static func buildChannelMenu(
+    channels: [[String: String]], selectedId: String, target: AnyObject, action: Selector
+  ) -> NSMenu {
+    let menu = NSMenu()
+    var regionMenus: [String: NSMenu] = [:]
+    var stationMenus: [String: [String: NSMenu]] = [:]
+
+    for channel in channels {
+      guard let id = channel["id"], let name = channel["name"],
+            let station = channel["station"], let region = channel["region"] else { continue }
+      if regionMenus[region] == nil {
+        let submenu = NSMenu(title: region)
+        let item = NSMenuItem(title: region, action: nil, keyEquivalent: "")
+        item.submenu = submenu
+        menu.addItem(item)
+        regionMenus[region] = submenu
+        stationMenus[region] = [:]
+      }
+      if stationMenus[region]?[station] == nil {
+        let submenu = NSMenu(title: station)
+        let item = NSMenuItem(title: station, action: nil, keyEquivalent: "")
+        item.submenu = submenu
+        regionMenus[region]?.addItem(item)
+        stationMenus[region]?[station] = submenu
+      }
+
+      let item = NSMenuItem(title: name, action: action, keyEquivalent: "")
+      item.target = target
+      item.representedObject = id
+      item.state = id == selectedId ? .on : .off
+      stationMenus[region]?[station]?.addItem(item)
+    }
+    return menu
   }
 
   func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
@@ -188,7 +213,7 @@ private final class RadioPopoverController: NSViewController {
   required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
   override func loadView() {
-    let background = NSVisualEffectView(frame: NSRect(x: 0, y: 0, width: 340, height: 156))
+    let background = NSVisualEffectView(frame: NSRect(x: 0, y: 0, width: 220, height: 172))
     background.material = .popover
     background.blendingMode = .behindWindow
     background.state = .active

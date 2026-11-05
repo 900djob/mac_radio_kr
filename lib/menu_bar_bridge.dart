@@ -52,7 +52,8 @@ class MenuBarBridge {
             {
               'id': channel.id,
               'name': channel.name,
-              'station': channel.station,
+              'station': channel.group,
+              'region': channel.region.label,
             },
         ],
       });
