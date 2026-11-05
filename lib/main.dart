@@ -36,8 +36,16 @@ class _MacRadioAppState extends State<MacRadioApp> {
   void initState() {
     super.initState();
     widget.controller.addListener(_updateStatus);
+    _bridge.setMediaCommandHandler(_handleMediaCommand);
     _updateStatus();
   }
+
+  Future<void> _handleMediaCommand(String command) => switch (command) {
+    'play' => widget.controller.play(),
+    'pause' || 'stop' => widget.controller.stop(),
+    'togglePlayPause' => widget.controller.togglePlayback(),
+    _ => Future<void>.value(),
+  };
 
   void _updateStatus() {
     final value =
@@ -45,11 +53,18 @@ class _MacRadioAppState extends State<MacRadioApp> {
     if (_lastStatus == value) return;
     _lastStatus = value;
     unawaited(_bridge.updateStatus(value));
+    unawaited(
+      _bridge.updateNowPlaying(
+        widget.controller.channel.name,
+        isPlaying: widget.controller.status == RadioStatus.playing,
+      ),
+    );
   }
 
   @override
   void dispose() {
     widget.controller.removeListener(_updateStatus);
+    _bridge.clearMediaCommandHandler();
     widget.controller.dispose();
     super.dispose();
   }

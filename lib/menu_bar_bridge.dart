@@ -64,5 +64,27 @@ class MenuBarBridge {
   Future<void> updateStatus(String value) =>
       _channel.invokeMethod<void>('updateStatus', value);
 
+  Future<void> updateNowPlaying(String title, {required bool isPlaying}) =>
+      _channel.invokeMethod<void>('updateNowPlaying', {
+        'title': title,
+        'isPlaying': isPlaying,
+      });
+
+  void setMediaCommandHandler(Future<void> Function(String) handler) {
+    _channel.setMethodCallHandler((call) {
+      final command = switch (call.method) {
+        'mediaPlay' => 'play',
+        'mediaPause' => 'pause',
+        'mediaStop' => 'stop',
+        'mediaTogglePlayPause' => 'togglePlayPause',
+        _ => null,
+      };
+      if (command == null) throw MissingPluginException(call.method);
+      return handler(command);
+    });
+  }
+
+  void clearMediaCommandHandler() => _channel.setMethodCallHandler(null);
+
   Future<void> quit() => _channel.invokeMethod<void>('quit');
 }

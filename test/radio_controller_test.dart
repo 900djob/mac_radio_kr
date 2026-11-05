@@ -131,6 +131,16 @@ void main() {
     verifyNever(() => player.play());
   });
 
+  test(
+    'play starts the current channel and ignores duplicate play commands',
+    () async {
+      await controller.play();
+      await controller.play();
+      expect(controller.status, RadioStatus.playing);
+      verify(() => player.play()).called(1);
+    },
+  );
+
   test('an error can be retried with a fresh URL', () async {
     when(
       () => resolver.resolve(any()),

@@ -1,5 +1,6 @@
 import Cocoa
 import FlutterMacOS
+import MediaPlayer
 
 @main
 class AppDelegate: FlutterAppDelegate, FlutterStreamHandler {
@@ -12,6 +13,9 @@ class AppDelegate: FlutterAppDelegate, FlutterStreamHandler {
   private let popover = NSPopover()
   private var escapeMonitor: Any?
   private var menuSelection: String?
+  private let nowPlayingInfoCenter = MPNowPlayingInfoCenter.default()
+  private var mediaCommandTargets: [(MPRemoteCommand, Any)] = []
+  private var mediaCommandsEnabled = false
 
   override func applicationDidFinishLaunching(_ notification: Notification) {
     NSApp.setActivationPolicy(.accessory)
@@ -30,6 +34,7 @@ class AppDelegate: FlutterAppDelegate, FlutterStreamHandler {
                                            binaryMessenger: engine.binaryMessenger)
     volumeChannel = volumeEvents
     volumeEvents.setStreamHandler(self)
+    registerMediaCommands()
     engine.run(withEntrypoint: nil)
 
     let controller = FlutterViewController(engine: engine, nibName: nil, bundle: nil)
@@ -118,6 +123,16 @@ class AppDelegate: FlutterAppDelegate, FlutterStreamHandler {
       }
       result(nil)
 
+    case "updateNowPlaying":
+      guard let args = call.arguments as? [String: Any],
+            let title = args["title"] as? String,
+            let isPlaying = args["isPlaying"] as? Bool else {
+        result(FlutterError(code: "invalid_arguments", message: "Invalid now playing info", details: nil))
+        return
+      }
+      updateNowPlaying(title: title, isPlaying: isPlaying)
+      result(nil)
+
     case "quit":
       result(nil)
       DispatchQueue.main.async { NSApp.terminate(nil) }
@@ -138,6 +153,43 @@ class AppDelegate: FlutterAppDelegate, FlutterStreamHandler {
 
   @objc private func selectMenuItem(_ sender: NSMenuItem) {
     menuSelection = sender.representedObject as? String
+  }
+
+  private func registerMediaCommands() {
+    let center = MPRemoteCommandCenter.shared()
+    let commands: [(MPRemoteCommand, String)] = [
+      (center.playCommand, "mediaPlay"),
+      (center.pauseCommand, "mediaPause"),
+      (center.stopCommand, "mediaStop"),
+      (center.togglePlayPauseCommand, "mediaTogglePlayPause"),
+    ]
+    for (command, method) in commands {
+      command.isEnabled = false
+      let target = command.addTarget { [weak self] _ in
+        guard let self, self.mediaCommandsEnabled else { return .noSuchContent }
+        DispatchQueue.main.async {
+          self.menuChannel?.invokeMethod(method, arguments: nil)
+        }
+        return .success
+      }
+      mediaCommandTargets.append((command, target))
+    }
+  }
+
+  private func updateNowPlaying(title: String, isPlaying: Bool) {
+    if isPlaying { mediaCommandsEnabled = true }
+    guard mediaCommandsEnabled else { return }
+
+    nowPlayingInfoCenter.nowPlayingInfo = [
+      MPMediaItemPropertyTitle: title,
+      MPMediaItemPropertyArtist: "mac_radio_kr",
+      MPNowPlayingInfoPropertyIsLiveStream: true,
+      MPNowPlayingInfoPropertyPlaybackRate: isPlaying ? 1.0 : 0.0,
+    ]
+    nowPlayingInfoCenter.playbackState = isPlaying ? .playing : .paused
+    for (command, _) in mediaCommandTargets {
+      command.isEnabled = true
+    }
   }
 
   static func buildChannelMenu(
@@ -195,6 +247,12 @@ class AppDelegate: FlutterAppDelegate, FlutterStreamHandler {
 
   override func applicationWillTerminate(_ notification: Notification) {
     if let monitor = escapeMonitor { NSEvent.removeMonitor(monitor) }
+    for (command, target) in mediaCommandTargets {
+      command.removeTarget(target)
+      command.isEnabled = false
+    }
+    nowPlayingInfoCenter.nowPlayingInfo = nil
+    nowPlayingInfoCenter.playbackState = .stopped
     menuChannel?.setMethodCallHandler(nil)
     volumeChannel?.setStreamHandler(nil)
     systemVolume.stopObserving()

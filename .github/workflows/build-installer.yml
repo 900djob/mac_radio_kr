@@ -1,0 +1,78 @@
+name: Build macOS installer
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: macos-installer-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-15
+    env:
+      APP_VERSION: 1.0.${{ github.run_number }}
+      BUILD_NUMBER: ${{ github.run_number }}
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.41.1
+          cache: true
+
+      - name: Set version
+        run: |
+          python3 - "$APP_VERSION" "$BUILD_NUMBER" <<'PY'
+          from pathlib import Path
+          import re
+          import sys
+
+          path = Path("pubspec.yaml")
+          text = path.read_text()
+          version = f"{sys.argv[1]}+{sys.argv[2]}"
+          updated, count = re.subn(r"(?m)^version: .+$", f"version: {version}", text, count=1)
+          if count != 1:
+              raise SystemExit("Could not update version in pubspec.yaml")
+          path.write_text(updated)
+          PY
+
+      - name: Resolve dependencies
+        run: flutter pub get --enforce-lockfile
+
+      - name: Build release app
+        run: flutter build macos --release
+
+      - name: Package installer
+        run: |
+          APP_PATH="build/macos/Build/Products/Release/mac_radio_kr.app"
+          if [[ "$(uname -m)" != "arm64" ]]; then
+            echo "Expected an Apple Silicon runner, got $(uname -m)" >&2
+            exit 1
+          fi
+          if [[ ! -d "$APP_PATH" ]]; then
+            echo "Release app not found: $APP_PATH" >&2
+            exit 1
+          fi
+          mkdir -p "설치파일"
+          rm -f "설치파일"/mac_radio_kr-v*-arm64.zip
+          ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "설치파일/mac_radio_kr-v${APP_VERSION}-arm64.zip"
+
+      - name: Commit updated version and installer
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add pubspec.yaml "설치파일"
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "chore: update macOS installer to v${APP_VERSION} [skip ci]"
+          git push origin HEAD:main

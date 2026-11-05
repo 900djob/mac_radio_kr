@@ -98,7 +98,12 @@ class RadioController extends ChangeNotifier {
     }
   }
 
-  Future<void> togglePlayback() => _wantsPlayback ? stop() : select(channel);
+  Future<void> play() async {
+    if (_closed || _wantsPlayback) return;
+    await select(channel);
+  }
+
+  Future<void> togglePlayback() => _wantsPlayback ? stop() : play();
 
   Future<void> stop() async {
     if (_closed) return;
