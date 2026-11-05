@@ -33,10 +33,10 @@ void main() {
       );
     await icons.load();
   });
-  testWidgets('420x200 panel fits every state in light and dark appearance', (
+  testWidgets('340x156 panel fits every state in light and dark appearance', (
     tester,
   ) async {
-    tester.view.physicalSize = const Size(840, 400);
+    tester.view.physicalSize = const Size(680, 312);
     tester.view.devicePixelRatio = 2;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);

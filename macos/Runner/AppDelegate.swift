@@ -31,7 +31,7 @@ class AppDelegate: FlutterAppDelegate {
     radioViewController = controller
     let content = RadioPopoverController(flutter: controller)
     popover.contentViewController = content
-    popover.contentSize = NSSize(width: 420, height: 200)
+    popover.contentSize = NSSize(width: 340, height: 156)
     popover.behavior = .transient
     popover.animates = true
 
@@ -156,7 +156,7 @@ private final class RadioPopoverController: NSViewController {
   required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
   override func loadView() {
-    let background = NSVisualEffectView(frame: NSRect(x: 0, y: 0, width: 420, height: 200))
+    let background = NSVisualEffectView(frame: NSRect(x: 0, y: 0, width: 340, height: 156))
     background.material = .popover
     background.blendingMode = .behindWindow
     background.state = .active

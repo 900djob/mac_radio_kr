@@ -17,7 +17,7 @@ flutter run -d macos
 
 ## 구성
 
-- Flutter: `RadioController`, `StreamUrlResolver`, 채널 목록, 420 × 200pt 패널 UI.
+- Flutter: `RadioController`, `StreamUrlResolver`, 채널 목록, 340 × 156pt 패널 UI.
 - AppKit: `NSStatusItem`, `NSPopover`, `NSVisualEffectView`, 네이티브 채널 메뉴와 엔진 수명 관리.
 - 오디오: 하나의 `just_audio` 플레이어로 HLS 재생. 채널 변경·재시도 시 동적 URL을 새로 조회합니다.
 - 채널: KBS 6개, MBC 2개, SBS 2개, CBS 2개, EBS FM으로 총 13개입니다.

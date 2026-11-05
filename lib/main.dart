@@ -118,11 +118,11 @@ class RadioPopover extends StatelessWidget {
       return ColoredBox(
         color: const Color(0x00000000),
         child: Padding(
-          padding: const EdgeInsets.all(18),
+          padding: const EdgeInsets.all(12),
           child: Row(
             children: [
               _ChannelArtwork(channel: controller.channel, dark: dark),
-              const SizedBox(width: 20),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -142,7 +142,7 @@ class RadioPopover extends StatelessWidget {
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
                                       color: text,
-                                      fontSize: 18,
+                                      fontSize: 16,
                                       fontWeight: FontWeight.w600,
                                       letterSpacing: -0.5,
                                     ),
@@ -164,7 +164,7 @@ class RadioPopover extends StatelessWidget {
                           padding: const EdgeInsets.all(4),
                           child: Icon(
                             CupertinoIcons.ellipsis,
-                            size: 19,
+                            size: 16,
                             color: secondary,
                           ),
                         ),
@@ -203,7 +203,7 @@ class RadioPopover extends StatelessWidget {
                           onPressed: () => controller.step(-1),
                           child: Icon(
                             CupertinoIcons.backward_end_fill,
-                            size: 29,
+                            size: 24,
                             color: secondary,
                           ),
                         ),
@@ -211,16 +211,16 @@ class RadioPopover extends StatelessWidget {
                           label: busy || active ? '재생 정지' : '라디오 재생',
                           onPressed: controller.togglePlayback,
                           child: SizedBox(
-                            width: 48,
-                            height: 46,
+                            width: 40,
+                            height: 36,
                             child: Center(
                               child: busy
-                                  ? const CupertinoActivityIndicator(radius: 12)
+                                  ? const CupertinoActivityIndicator(radius: 10)
                                   : Icon(
                                       active
                                           ? CupertinoIcons.stop_fill
                                           : CupertinoIcons.play_fill,
-                                      size: active ? 30 : 37,
+                                      size: active ? 24 : 30,
                                       color: text,
                                     ),
                             ),
@@ -231,7 +231,7 @@ class RadioPopover extends StatelessWidget {
                           onPressed: () => controller.step(1),
                           child: Icon(
                             CupertinoIcons.forward_end_fill,
-                            size: 29,
+                            size: 24,
                             color: secondary,
                           ),
                         ),
@@ -249,36 +249,40 @@ class RadioPopover extends StatelessWidget {
                           child: Semantics(
                             label: '볼륨',
                             value: '${(controller.volume * 100).round()}%',
-                            child: Material(
-                              type: MaterialType.transparency,
-                              child: SliderTheme(
-                                data: SliderThemeData(
-                                  trackHeight: 3,
-                                  activeTrackColor: const Color(0xFF007AFF),
-                                  inactiveTrackColor: secondary.withValues(
-                                    alpha: 0.22,
+                            child: SizedBox(
+                              height: 28,
+                              child: Material(
+                                type: MaterialType.transparency,
+                                child: SliderTheme(
+                                  data: SliderThemeData(
+                                    trackHeight: 3,
+                                    activeTrackColor: const Color(0xFF007AFF),
+                                    inactiveTrackColor: secondary.withValues(
+                                      alpha: 0.22,
+                                    ),
+                                    thumbColor: dark
+                                        ? const Color(0xFFE2E2E6)
+                                        : CupertinoColors.white,
+                                    overlayColor: const Color(0x19007AFF),
+                                    thumbShape: const RoundSliderThumbShape(
+                                      enabledThumbRadius: 5,
+                                      elevation: 1,
+                                    ),
+                                    overlayShape: const RoundSliderOverlayShape(
+                                      overlayRadius: 9,
+                                    ),
+                                    showValueIndicator:
+                                        ShowValueIndicator.never,
                                   ),
-                                  thumbColor: dark
-                                      ? const Color(0xFFE2E2E6)
-                                      : CupertinoColors.white,
-                                  overlayColor: const Color(0x19007AFF),
-                                  thumbShape: const RoundSliderThumbShape(
-                                    enabledThumbRadius: 5,
-                                    elevation: 1,
+                                  child: Slider(
+                                    value: controller.volume,
+                                    onChanged: controller.setVolume,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                    ),
+                                    semanticFormatterCallback: (value) =>
+                                        '${(value * 100).round()}%',
                                   ),
-                                  overlayShape: const RoundSliderOverlayShape(
-                                    overlayRadius: 9,
-                                  ),
-                                  showValueIndicator: ShowValueIndicator.never,
-                                ),
-                                child: Slider(
-                                  value: controller.volume,
-                                  onChanged: controller.setVolume,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                  ),
-                                  semanticFormatterCallback: (value) =>
-                                      '${(value * 100).round()}%',
                                 ),
                               ),
                             ),
@@ -321,8 +325,8 @@ class _ChannelArtwork extends StatelessWidget {
       label: '${channel.station} 라디오',
       image: true,
       child: Container(
-        width: 128,
-        height: 144,
+        width: 92,
+        height: 112,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
           gradient: LinearGradient(
@@ -351,15 +355,15 @@ class _ChannelArtwork extends StatelessWidget {
           children: [
             const Icon(
               CupertinoIcons.antenna_radiowaves_left_right,
-              size: 38,
+              size: 28,
               color: CupertinoColors.white,
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 8),
             Text(
               channel.station,
               style: const TextStyle(
                 color: CupertinoColors.white,
-                fontSize: 24,
+                fontSize: 20,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 1.5,
               ),
@@ -369,7 +373,7 @@ class _ChannelArtwork extends StatelessWidget {
               'RADIO',
               style: TextStyle(
                 color: CupertinoColors.white.withValues(alpha: 0.75),
-                fontSize: 9,
+                fontSize: 8,
                 letterSpacing: 3,
               ),
             ),
@@ -407,7 +411,7 @@ class _PanelButton extends StatefulWidget {
     required this.label,
     required this.onPressed,
     required this.child,
-    this.padding = const EdgeInsets.all(6),
+    this.padding = const EdgeInsets.all(4),
   });
 
   final String label;
