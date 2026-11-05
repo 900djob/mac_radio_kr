@@ -1,0 +1,5 @@
+#include "../../Flutter/Flutter-Release.xcconfig"
+#include "Warnings.xcconfig"
+
+// Local builds target the current Mac; Xcode 27 lipo fails multi-arch verification.
+ARCHS = $(NATIVE_ARCH_ACTUAL)
