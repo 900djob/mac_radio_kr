@@ -10,9 +10,9 @@
 
 ## 다운로드 및 설치
 
-[설치 ZIP 다운로드 (v1.0.1 · arm64)](https://github.com/900djob/mac_radio_kr/raw/76d1c4e08de525f3b6757dbf71862bd85076d5a1/%EC%84%A4%EC%B9%98%ED%8C%8C%EC%9D%BC/mac_radio_kr-v1.0.1-arm64.zip)
+[최신 설치 ZIP 다운로드 (arm64)](https://github.com/900djob/mac_radio_kr/releases/latest/download/mac_radio_kr-arm64.zip)
 
-최신 설치파일은 [설치파일 폴더](./설치파일/)에서 확인할 수 있습니다. 폴더에서 ZIP 파일명을 클릭하면 상세 페이지가 열리며, `Download raw file` 또는 `View raw`를 눌러 다운로드합니다.
+버전별 설치파일은 [Releases](https://github.com/900djob/mac_radio_kr/releases)에서 확인할 수 있습니다. 위 다운로드 링크는 새 버전이 배포되어도 그대로 사용할 수 있습니다.
 
 - 대상: Apple Silicon Mac (arm64)
 - 요구 사항: macOS 14 이상
@@ -23,7 +23,7 @@
 
 앱은 공증되지 않았습니다. 신뢰할 수 있는 파일인지 확인한 뒤, 첫 실행이 차단되면 [Apple 안내](https://support.apple.com/en-us/102445)에 따라 `시스템 설정 → 개인정보 보호 및 보안`의 `Open Anyway`로 실행을 허용할 수 있습니다. Intel Mac에서는 실행할 수 없습니다.
 
-`main`에 변경사항을 push하면 GitHub Actions가 버전을 올리고 설치 ZIP을 갱신합니다. `[skip ci]`가 포함된 commit은 빌드를 건너뜁니다. 버전은 ZIP 파일명과 앱 정보에 표시됩니다.
+`main`에 변경사항을 push하면 GitHub Actions가 버전을 올리고 설치 ZIP을 갱신한 뒤 Release에 게시합니다. `[skip ci]`가 포함된 commit은 빌드를 건너뜁니다. 버전은 Release 이름과 앱 정보에 표시됩니다.
 
 ## 사용 방법
 
@@ -81,3 +81,14 @@ flutter build macos --release
 Release 앱 경로: `build/macos/Build/Products/Release/mac_radio_kr.app`.
 
 Release 빌드는 현재 Mac의 아키텍처를 사용합니다. Apple Silicon 빌드는 arm64용입니다. 앱은 로컬 서명만 적용하며 공증이나 스토어 배포는 포함하지 않습니다.
+
+## 다운로드 통계
+
+Release에 첨부한 ZIP의 누적 다운로드 횟수는 [GitHub API](https://api.github.com/repos/900djob/mac_radio_kr/releases)의 `assets[].download_count`로 확인할 수 있습니다. GitHub CLI에서는 다음 명령으로 버전별 횟수를 조회합니다.
+
+```sh
+gh api --paginate repos/900djob/mac_radio_kr/releases \
+  --jq '.[] | .tag_name as $version | .assets[] | {version: $version, file: .name, downloads: .download_count}'
+```
+
+다운로드 횟수는 고유 사용자 수나 설치 수와 다릅니다. 기존 `raw` 링크와 `설치파일` 폴더에서 받은 횟수는 포함되지 않습니다.

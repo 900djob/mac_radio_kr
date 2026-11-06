@@ -76,3 +76,15 @@ jobs:
           fi
           git commit -m "chore: update macOS installer to v${APP_VERSION} [skip ci]"
           git push origin HEAD:main
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          cp "설치파일/mac_radio_kr-v${APP_VERSION}-arm64.zip" "$RUNNER_TEMP/mac_radio_kr-arm64.zip"
+          gh release create "v${APP_VERSION}" "$RUNNER_TEMP/mac_radio_kr-arm64.zip" \
+            --target "$(git rev-parse HEAD)" \
+            --title "mac_radio_kr v${APP_VERSION}" \
+            --notes "Apple Silicon Mac (arm64)용 설치 ZIP입니다. macOS 14 이상에서 실행할 수 있습니다." \
+            --latest
