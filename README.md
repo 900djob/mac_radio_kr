@@ -2,6 +2,12 @@
 
 한국 라디오를 재생하는 macOS 메뉴 막대 앱입니다. Flutter와 AppKit으로 만들었습니다.
 
+## 미리보기
+
+| 라이트 모드 | 다크 모드 |
+| :---: | :---: |
+| <img src="docs/images/radio-panel-light.png" alt="라이트 모드의 라디오 패널" width="220"> | <img src="docs/images/radio-panel-dark.png" alt="다크 모드의 라디오 패널" width="220"> |
+
 ## 다운로드 및 설치
 
 [최신 설치 ZIP](./설치파일/)을 다운로드하세요.
